@@ -34,7 +34,7 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 public:
   MyASTVisitor(Rewriter &R) : TheRewriter(R) {}
 
-  bool VisitStmt(Stmt *s) {
+ bool VisitStmt(Stmt *s) {
     // Only care about If statements.
     if (isa<IfStmt>(s)) {
       IfStmt *IfStatement = cast<IfStmt>(s);
@@ -61,6 +61,7 @@ public:
       QualType QT = f->getReturnType();
       std::string TypeStr = QT.getAsString();
 
+
       // Function name
       DeclarationName DeclName = f->getNameInfo().getName();
       std::string FuncName = DeclName.getAsString();
@@ -77,6 +78,7 @@ public:
       SSAfter << "\n// End function " << FuncName;
       ST = FuncBody->getLocEnd().getLocWithOffset(1);
       TheRewriter.InsertText(ST, SSAfter.str(), true, true);
+
     }
 
     return true;

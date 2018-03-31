@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(parser)
+project(myClang)
 
 # Need Clang and LLVM to compile
 find_package(Clang REQUIRED CONFIG)
@@ -26,4 +26,3 @@ add_llvm_executable(myClangExe
 target_link_libraries(myClangExe
  clangTooling
  )
-
