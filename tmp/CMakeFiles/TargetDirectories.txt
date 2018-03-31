@@ -1,0 +1,5 @@
+/home/vova/prog/clang/tools/tmp/CMakeFiles/edit_cache.dir
+/home/vova/prog/clang/tools/tmp/CMakeFiles/myClangExe.dir
+/home/vova/prog/clang/tools/tmp/CMakeFiles/clang-tablegen-targets.dir
+/home/vova/prog/clang/tools/tmp/CMakeFiles/rebuild_cache.dir
+/home/vova/prog/clang/tools/tmp/CMakeFiles/intrinsics_gen.dir
