@@ -1,6 +1,3 @@
-//------------------------------------------------------------------------------
-// Tooling sample. Demonstrates:
-//
 // * How to write a simple source tool using libTooling.
 // * How to use RecursiveASTVisitor to find interesting AST nodes.
 // * How to use the Rewriter API to rewrite the source code.
@@ -10,6 +7,7 @@
 //------------------------------------------------------------------------------
 #include <sstream>
 #include <string>
+#include <iostream>
 
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
@@ -34,20 +32,15 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 public:
   MyASTVisitor(Rewriter &R) : TheRewriter(R) {}
 
- bool VisitStmt(Stmt *s) {
+  bool VisitStmt(Stmt *s) {
     // Only care about If statements.
-    if (isa<IfStmt>(s)) {
-      IfStmt *IfStatement = cast<IfStmt>(s);
-      Stmt *Then = IfStatement->getThen();
 
-      TheRewriter.InsertText(Then->getLocStart(), "// the 'if' part\n", true,
+	if (isa<ForStmt>(s)){
+		ForStmt *ForStat = cast<ForStmt>(s);
+		TheRewriter.InsertText(ForStat->getLocStart(), "// the 'for' part\n", true,
                              true);
+	}
 
-      Stmt *Else = IfStatement->getElse();
-      if (Else)
-        TheRewriter.InsertText(Else->getLocStart(), "// the 'else' part\n",
-                               true, true);
-    }
 
     return true;
   }
@@ -60,7 +53,6 @@ public:
       // Type name as string
       QualType QT = f->getReturnType();
       std::string TypeStr = QT.getAsString();
-
 
       // Function name
       DeclarationName DeclName = f->getNameInfo().getName();
@@ -78,7 +70,6 @@ public:
       SSAfter << "\n// End function " << FuncName;
       ST = FuncBody->getLocEnd().getLocWithOffset(1);
       TheRewriter.InsertText(ST, SSAfter.str(), true, true);
-
     }
 
     return true;
@@ -98,7 +89,7 @@ public:
   // declaration.
   bool HandleTopLevelDecl(DeclGroupRef DR) override {
     for (DeclGroupRef::iterator b = DR.begin(), e = DR.end(); b != e; ++b) {
-      // Traverse the declaration using our AST visitor.
+       //Traverse the declaration using our AST visitor.
       Visitor.TraverseDecl(*b);
       //(*b)->dump();
     }
