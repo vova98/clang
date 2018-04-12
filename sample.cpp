@@ -33,10 +33,39 @@ public:
   MyASTVisitor(Rewriter &R) : TheRewriter(R) {}
 
   bool VisitStmt(Stmt *s) {
-    // Only care about If statements.
 
 	if (isa<ForStmt>(s)){
-		ForStmt *ForStat = cast<ForStmt>(s);
+		ForStmt* ForStat = cast<ForStmt>(s);
+		Stmt* ForInit = ForStat->getInit();
+		//ForInit->dump();
+		const Expr* ForCond = ForStat->getCond();
+		const Expr* ForInc = ForStat->getInc();
+		Stmt* ForBody = ForStat->getBody();
+
+		if (const BinaryOperator *BinOP = llvm::dyn_cast<BinaryOperator>(ForBody)) {
+			printf("stmt have binop\n");
+			if (BinOP->getOpcode() == BO_Assign) {
+				printf("assign operator\n");
+			  const Expr *LHS = BinOP->getLHS();
+			  if (const ImplicitCastExpr *Cast =
+				      llvm::dyn_cast<ImplicitCastExpr>(LHS)) {
+				printf("have LHS\n");
+				LHS = Cast->getSubExpr();
+			  }
+
+			  if (const DeclRefExpr *DeclRef = llvm::dyn_cast<DeclRefExpr>(LHS)) {
+				if (const VarDecl *Var =
+				        llvm::dyn_cast<VarDecl>(DeclRef->getDecl())) {
+					printf("cast to var\n");
+				  if (Var->getType()->isPointerType()) {
+				    Var->dump();  // YAY found it!!
+					printf("hehey\n");
+				  }
+				}
+			  }
+			}
+		}
+		
 		TheRewriter.InsertText(ForStat->getLocStart(), "// the 'for' part\n", true,
                              true);
 	}
