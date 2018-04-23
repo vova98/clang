@@ -44,11 +44,12 @@ public:
   IncrementForLoopHandler(Rewriter &Rewrite) : Rewrite(Rewrite) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
-    //const VarDecl *IncVar = Result.Nodes.getNodeAs<VarDecl>("incVarName");
-   // Rewrite.InsertText(IncVar->getLocStart(), "/* increment */", true, true);
-
+  	//printf("forStrt\n");
 		const Stmt *forL = Result.Nodes.getNodeAs<clang::Stmt>("forLoop");
-		forL->dump();
+		//printf("forMidl\n");
+		Rewrite.InsertText(forL->getLocStart(), "/*mem*/", true, true);
+		//printf("forEnd\n");
+		//forL->dump();
   }
 
 
@@ -56,54 +57,44 @@ private:
   Rewriter &Rewrite;
 };
 
-class CxxCall : public MatchFinder::MatchCallback {
+class MainCall : public MatchFinder::MatchCallback {
 public:
-  CxxCall(Rewriter &Rewrite) : Rewrite(Rewrite) {}
+  MainCall(Rewriter &Rewrite) : Rewrite(Rewrite) {}
 
   virtual void run(const MatchFinder::MatchResult &Result) {
-    const Stmt *fSt = Result.Nodes.getNodeAs<clang::Stmt>("cxx");
-    Rewrite.InsertText(fSt->getLocStart(), "/*df*/", true, true);
+		//printf("asdasd\n");
+		const Decl *MainC = Result.Nodes.getNodeAs<clang::Decl>("main");
+		//MainC->dump();
   }
+
 
 private:
   Rewriter &Rewrite;
 };
-
 
 // Implementation of the ASTConsumer interface for reading an AST produced
 // by the Clang parser. It registers a couple of matchers and runs them on
 // the AST.
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(Rewriter &R) : HandlerForIf(R), HandlerForFor(R),HandlerForCxx(R)  {
+  MyASTConsumer(Rewriter &R) : HandlerForIf(R), HandlerForFor(R), HandlerForMain(R)  {
     // Add a simple matcher for finding 'if' statements.
     Matcher.addMatcher(ifStmt().bind("ifStmt"), &HandlerForIf);
 
-    // Add a complex matcher for finding 'for' loops with an initializer set
-    // to 0, < comparison in the codition and an increment. For example:
-    //
-    //  for (int i = 0; i < N; ++i)
+		Matcher.addMatcher(forStmt(isExpansionInMainFile(), 
+															mlhasLoopInit("begin"), 
+															anyOf(mlhasLoopInit("end"), hasCondition(hasDescendant(mlhasName("end")))) 
+															).bind("forLoop"), &HandlerForFor);
 
-    /*Matcher.addMatcher(
-        forStmt(hasLoopInit(declStmt(hasSingleDecl(
-                    varDecl(hasInitializer(integerLiteral(equals(0))))
-                        .bind("initVarName")))),
-                hasIncrement(unaryOperator(
-                    hasOperatorName("++"),
-                    hasUnaryOperand(declRefExpr(to(
-                        varDecl(hasType(isInteger())).bind("incVarName")))))),
-                hasCondition(binaryOperator(
-                    hasOperatorName("<"),
-                    hasLHS(ignoringParenImpCasts(declRefExpr(to(
-                        varDecl(hasType(isInteger())).bind("condVarName"))))),
-                    hasRHS(expr(hasType(isInteger()))))))
-            .bind("forLoop"),
-        &HandlerForFor);
+		Matcher.addMatcher(functionDecl(hasName("main")).bind("main"), &HandlerForMain);
+  }
 
-	*/
-		Matcher.addMatcher(forStmt().bind("forLoop"), &HandlerForFor);
+  internal::Matcher<ForStmt> mlhasLoopInit(std::string str){
+  	return hasLoopInit(hasDescendant(mlhasName(str)));
+  }
 
-		Matcher.addMatcher(cxxMemberCallExpr().bind("cxx"), &HandlerForCxx);
+  internal::Matcher<Stmt> mlhasName(std::string str){
+  	return memberExpr(member(hasName(str)));
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
@@ -114,7 +105,7 @@ public:
 private:
   IfStmtHandler HandlerForIf;
   IncrementForLoopHandler HandlerForFor;
-	CxxCall HandlerForCxx;
+	MainCall HandlerForMain;
   MatchFinder Matcher;
 };
 
